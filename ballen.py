@@ -13,14 +13,14 @@ import os
 import sys
 import time
 import shutil
+import configparser
 import subprocess
 from subprocess import CalledProcessError
 
+file_config = "config.ini"
 local_drive = "/dev/sda1"
 local_mount_folder = "drive"
 local_backup = "backups"
-
-sleep_time = 20
 
 def log(msg, type='info'):
 	type = type.upper()
@@ -146,7 +146,22 @@ def print_success(result):
 		log('**********************')
 		log('    Unknown result    ')
 
+def process_config():
+	if not os.path.exists(file_config):
+		log("Config INI does not exist", "Error")
+	parser = configparser.ConfigParser()
+	parser.read(file_config)
+	config = parser['DEFAULT']
+
+	global local_drive
+	global local_mount_folder
+	global local_backup
+	local_drive = config['dev_drive']
+	local_mount_folder = config['mount_folder']
+	local_backup = config['backup_folder']
+
 def main():
+	process_config()
 	option = check_args()
 	success = False
 	log(f"Option: {option}")
