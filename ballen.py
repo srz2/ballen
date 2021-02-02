@@ -63,8 +63,9 @@ def load_fw_ver4():
 	copytree('fw4', local_mount_folder)
 
 def fatsort():
+	log('Reorganizing files with fatsort')
 	unmount(local_drive)
-	subprocess.call([f'sudo ./fatsort {local_drive}'], shell=True)
+	subprocess.call([f'sudo ./fatsort {local_drive} 1> /dev/null'], shell=True)
 	mount(local_drive)
 
 def mount(drive):
@@ -95,6 +96,7 @@ def stage_1():
 	
 def stage_2():
 	restore()
+	fatsort()
 	return True
 
 def show_help():
