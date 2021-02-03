@@ -121,13 +121,14 @@ def show_help():
 	print('          Load the contents of the backup dir')
 	print('          Overwrite the DAT file from fw4 to drive')
 	print('          Execute the fatsort program')
-	print('Optionals')
-	print('    --fatsort-only: The only action performed is')
-	print('                    to execute this program on the drive.')
 
 def check_args():
 	argc = len(sys.argv) - 1
 	if argc != 1:
+		return -1
+	arg = sys.argv[1]
+	if arg in ['?', '/?', '-h', '--help']:
+		show_help()
 		return -1
 	argv = int(sys.argv[1])
 	return argv
@@ -173,6 +174,10 @@ def process_config():
 def main():
 	process_config()
 	option = check_args()
+	if option <= 0:
+		log('Invalid option given')
+		return
+
 	success = False
 	log(f"Option: {option}")
 	try:
@@ -182,7 +187,7 @@ def main():
 		elif option == 2:
 			success = stage_2()
 		else:
-			pass	
+			log('Unknown option given')
 	finally:
 		unmount(local_drive)
 
