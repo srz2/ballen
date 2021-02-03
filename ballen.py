@@ -1,4 +1,6 @@
-# This is a helper program for working with EZ-Flash Jr.
+#!/usr/bin/env python3
+# 
+# # This is a helper program for working with EZ-Flash Jr.
 # Developer: Steven Zilberberg
 # Date: 1/24/2021
 
@@ -48,11 +50,16 @@ def restore():
 	copytree(local_backup, local_mount_folder)
 
 def format_disk(drive):
-	unmount(drive)
+	unmounted = unmount(drive)
+	if not unmounted:
+		raise Exception("Format disk failed to unmount drive")
+
 	try:
 		subprocess.check_call([f'sudo mkfs.vfat {drive}'], shell=True)
 		time.sleep(1)
-		mount(drive)
+		mounted = mount(drive)
+		if not mounted:
+			raise Exception('format disk failed to remount drive')
 	except CalledProcessError as e:
 		log('Failed to make filesystem', 'error')
 	except Exception as e:
@@ -61,12 +68,18 @@ def format_disk(drive):
 def load_fw_ver4():
 	log('Loading FW4...')
 	copytree('fw4', local_mount_folder)
+	time.sleep(1)
 
 def fatsort():
 	log('Reorganizing files with fatsort')
-	unmount(local_drive)
+	unmounted = unmount(local_drive)
+	if not unmounted:
+		raise Exception('Fatsort failed to unmount drive')
+
 	subprocess.call([f'sudo ./fatsort {local_drive} 1> /dev/null'], shell=True)
-	mount(local_drive)
+	mounted = mount(local_drive)
+	if not mounted:
+		raise Exception('Fatsort failed to remount drive')
 
 def remove_default_files():
 	files = ['.gitkeep']
@@ -80,8 +93,10 @@ def mount(drive):
 		log(f"Mounting {drive}")
 		subprocess.check_call([f'sudo mount {local_drive} {local_mount_folder} -o uid=pi -o gid=pi'], shell=True)
 		time.sleep(1)
+		return True
 	except CalledProcessError as e:
 		log('Failed to mount drive', 'error')
+		return False
 	except Exception as e:
 		raise e
 
@@ -90,8 +105,10 @@ def unmount(drive):
 		log(f"Unmounting {drive}")
 		subprocess.check_call([f'sudo umount {drive}'], shell=True)
 		time.sleep(1)
+		return True
 	except CalledProcessError as e:
 		log('Failed to unmount drive', 'error')
+		return False
 	except Exception as e:
 		raise e
 
@@ -171,7 +188,20 @@ def process_config():
 	local_mount_folder = config['mount_folder']
 	local_backup = config['backup_folder']
 
+def check_for_admin():
+	if os.getuid() == 0:
+		return True
+	else:
+		return False
+
 def main():
+	is_admin = check_for_admin()
+	if not is_admin:
+		log('Need to be admin to run', 'error')
+		return
+	else:
+		log('User is Admin')
+
 	process_config()
 	option = check_args()
 	if option <= 0:
@@ -181,7 +211,10 @@ def main():
 	success = False
 	log(f"Option: {option}")
 	try:
-		mount(local_drive)
+		mounted = mount(local_drive)
+		if not mounted:
+			raise Exception('Failed to mount drive')
+
 		if option == 1:
 			success = stage_1()
 		elif option == 2:
@@ -189,7 +222,8 @@ def main():
 		else:
 			log('Unknown option given')
 	finally:
-		unmount(local_drive)
+		if mounted:
+			unmount(local_drive)
 
 	if success:
 		print_success(option)
