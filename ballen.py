@@ -68,6 +68,13 @@ def fatsort():
 	subprocess.call([f'sudo ./fatsort {local_drive} 1> /dev/null'], shell=True)
 	mount(local_drive)
 
+def remove_default_files():
+	files = ['.gitkeep']
+	for f in files:
+		file = f'{local_mount_folder}/{f}'
+		if os.path.exists(file):
+			os.remove(file)
+
 def mount(drive):
 	try:
 		log(f"Mounting {drive}")
@@ -96,6 +103,7 @@ def stage_1():
 	
 def stage_2():
 	restore()
+	remove_default_files()
 	fatsort()
 	return True
 
