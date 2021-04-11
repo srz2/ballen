@@ -49,6 +49,10 @@ def restore():
 	log('Restoring your games')
 	copytree(local_backup, local_mount_folder)
 
+def overwrite_dat_file():
+	log('Overwriting old dat file')
+	shutil.copy('fw4/ezgb.dat', local_mount_folder + '/ezgb.dat')
+
 def format_disk(drive):
 	unmounted = unmount(drive)
 	if not unmounted:
@@ -120,6 +124,7 @@ def stage_1():
 	
 def stage_2():
 	restore()
+	overwrite_dat_file()
 	remove_default_files()
 	fatsort()
 	return True
